@@ -93,18 +93,45 @@ export const uid = () =>
 // --- seeding ----------------------------------------------------------------
 
 /**
- * Adds any built-in exercises the database has not seen. Runs on every start so
- * that catalogue additions in a later version show up, while never touching an
- * exercise the user has edited or archived.
+ * Syncs the built-in catalogue into the database on every start.
+ *
+ * Built-ins are copied in rather than read from the module at render time so
+ * that a session logged years ago can still resolve the exercise it referred
+ * to. The consequence is that a copy goes stale the moment the catalogue is
+ * corrected — a fixed typo or a clarified cue would never reach anyone who had
+ * already opened the app — so their content is refreshed here every time.
+ *
+ * Only the catalogue's own fields are overwritten. `archived` is the user's
+ * decision and survives, and custom exercises are never touched.
  */
 export async function seedLibrary(): Promise<void> {
   const db = await getDB();
-  const existing = new Set(await db.getAllKeys('exercises'));
-  const missing = BUILT_IN_EXERCISES.filter((e) => !existing.has(e.id));
-  if (!missing.length) return;
+  const stored = await db.getAll('exercises');
+  const byId = new Map(stored.map((e) => [e.id, e]));
+
+  const stale = BUILT_IN_EXERCISES.filter((seed) => {
+    const current = byId.get(seed.id);
+    if (!current) return true;
+    if (!current.builtIn) return false;
+    // Compare content only — createdAt and archived are local state.
+    const { createdAt: _a, archived: _b, ...currentContent } = current;
+    const { createdAt: _c, ...seedContent } = seed;
+    return JSON.stringify(currentContent) !== JSON.stringify(seedContent);
+  });
+  if (!stale.length) return;
+
   const tx = db.transaction('exercises', 'readwrite');
   const now = Date.now();
-  await Promise.all(missing.map((e) => tx.store.put({ ...e, createdAt: now })));
+  await Promise.all(
+    stale.map((seed) => {
+      const current = byId.get(seed.id);
+      return tx.store.put({
+        ...seed,
+        createdAt: current?.createdAt ?? now,
+        ...(current?.archived ? { archived: true } : {}),
+      });
+    }),
+  );
   await tx.done;
   changed('exercises');
 }

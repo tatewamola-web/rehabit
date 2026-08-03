@@ -15,7 +15,7 @@ import {
   StatTile,
   cx,
 } from '../components/ui';
-import { dueOnDay, encouragement, statsForDay, summarise } from '../lib/adherence';
+import { dueOnDay, encouragement, statsForDay, summarize } from '../lib/adherence';
 import { deleteSession } from '../lib/db';
 import { formatTime, friendlyDay, today } from '../lib/dates';
 import { metricOf } from '../lib/metrics';
@@ -42,7 +42,7 @@ export function TodayPage() {
     [activePrescriptions, sessions, day],
   );
   const summary = useMemo(
-    () => summarise(activePrescriptions, sessions, 30),
+    () => summarize(activePrescriptions, sessions, 30),
     [activePrescriptions, sessions],
   );
   const todaysSessions = useMemo(

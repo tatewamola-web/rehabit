@@ -75,7 +75,7 @@ export function SettingsPage() {
         <section>
           <SectionHeading
             title="About you"
-            hint="Only used to personalise the app and fill in the summary you print."
+            hint="Only used to personalize the app and fill in the summary you print."
           />
           <Card className="space-y-5">
             <Field label="Name" htmlFor="st-name">
@@ -206,7 +206,7 @@ export function SettingsPage() {
             </Field>
             <p className="text-xs text-ink-faint flex items-start gap-2 leading-relaxed">
               <Video size={13} className="mt-0.5 shrink-0" />
-              The camera image is analysed on this computer and discarded frame by frame. No video is
+              The camera image is analyzed on this computer and discarded frame by frame. No video is
               recorded, saved, or sent anywhere.
             </p>
           </Card>

@@ -1,12 +1,19 @@
 /**
  * Two views behind one heading: the catalogue you pick from, and the program
  * you have actually been given.
+ *
+ * The catalogue is a two-level accordion — body area, then exercise — rather
+ * than a wall of cards. Fifty exercises is a lot to scroll past when you only
+ * came to find the one on your sheet, and collapsing by body area means the
+ * whole library fits on one screen. Details open inline instead of in a dialog
+ * so you never lose your place in the list.
  */
 import { useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Camera,
   Check,
+  ChevronDown,
   Info,
   Pencil,
   Plus,
@@ -45,12 +52,15 @@ export function ExercisesPage() {
   const [tab, setTab] = useState<Tab>('library');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<ExerciseCategory | 'all'>('all');
-  const [detail, setDetail] = useState<Exercise | null>(null);
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [openExercise, setOpenExercise] = useState<string | null>(null);
   const [rxDialog, setRxDialog] = useState<{ open: boolean; exerciseId?: string; editing?: string }>(
     { open: false },
   );
   const [logFor, setLogFor] = useState<Exercise | null>(null);
   const [showCustom, setShowCustom] = useState(false);
+
+  const searching = query.trim().length > 0;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -76,6 +86,14 @@ export function ExercisesPage() {
       CATEGORY_LABELS[a].localeCompare(CATEGORY_LABELS[b]),
     );
   }, [filtered]);
+
+  const toggleCategory = (cat: string) =>
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
 
   return (
     <>
@@ -132,6 +150,31 @@ export function ExercisesPage() {
             </Select>
           </div>
 
+          {grouped.length > 1 ? (
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                className="text-xs text-brand-ink underline underline-offset-2"
+                onClick={() => setOpenCategories(new Set(grouped.map(([c]) => c)))}
+              >
+                Expand all
+              </button>
+              <span aria-hidden className="text-ink-faint text-xs">
+                ·
+              </span>
+              <button
+                type="button"
+                className="text-xs text-ink-soft underline underline-offset-2"
+                onClick={() => {
+                  setOpenCategories(new Set());
+                  setOpenExercise(null);
+                }}
+              >
+                Collapse all
+              </button>
+            </div>
+          ) : null}
+
           {grouped.length === 0 ? (
             <Card>
               <EmptyState
@@ -145,62 +188,69 @@ export function ExercisesPage() {
               />
             </Card>
           ) : (
-            grouped.map(([cat, items]) => (
-              <section key={cat} className="mb-8">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint mb-3">
-                  {CATEGORY_LABELS[cat]}
-                </h2>
-                <ul className="grid sm:grid-cols-2 gap-3">
-                  {items.map((exercise) => {
-                    const metric = metricOf(exercise.metric);
-                    const prescribed = prescriptions.some(
-                      (p) => p.exerciseId === exercise.id && p.active,
-                    );
-                    return (
-                      <Card as="li" key={exercise.id} className="flex flex-col gap-3">
-                        <div>
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-medium leading-snug">{exercise.name}</h3>
-                            {prescribed ? (
-                              <Chip tone="ok">
-                                <Check size={12} /> in program
-                              </Chip>
-                            ) : null}
-                          </div>
-                          <p className="text-sm text-ink-soft mt-1.5 leading-relaxed">
-                            {exercise.summary}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {metric ? (
-                            <Chip tone="brand">
-                              <Camera size={11} /> {metric.short}
-                            </Chip>
-                          ) : (
-                            <Chip>manual log</Chip>
-                          )}
-                          {exercise.strokeNote ? <Chip tone="accent">stroke focus</Chip> : null}
-                          {!exercise.builtIn ? <Chip>custom</Chip> : null}
-                        </div>
-                        <div className="flex gap-2 mt-auto pt-1">
-                          <Button size="sm" onClick={() => setDetail(exercise)} className="grow">
-                            Details
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            onClick={() => setRxDialog({ open: true, exerciseId: exercise.id })}
-                            className="grow"
-                          >
-                            Add to program
-                          </Button>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))
+            <div className="space-y-3">
+              {grouped.map(([cat, items]) => {
+                // While searching, show what matched instead of making people
+                // open every drawer to find out where the results are.
+                const open = searching || openCategories.has(cat);
+                const inProgram = items.filter((e) =>
+                  prescriptions.some((p) => p.exerciseId === e.id && p.active),
+                ).length;
+                return (
+                  <div key={cat} className="card overflow-hidden !p-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleCategory(cat)}
+                      aria-expanded={open}
+                      aria-controls={`cat-${cat}`}
+                      className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 text-left hover:bg-surface-2 transition min-h-14"
+                    >
+                      <ChevronDown
+                        size={18}
+                        className={cx(
+                          'text-ink-faint shrink-0 transition-transform',
+                          !open && '-rotate-90',
+                        )}
+                      />
+                      <span className="font-medium grow">{CATEGORY_LABELS[cat]}</span>
+                      {inProgram ? (
+                        <Chip tone="ok">
+                          <Check size={12} /> {inProgram} in program
+                        </Chip>
+                      ) : null}
+                      <span className="text-sm text-ink-faint tabular shrink-0">
+                        {items.length}
+                      </span>
+                    </button>
+
+                    {open ? (
+                      <ul id={`cat-${cat}`} className="border-t border-line">
+                        {items.map((exercise) => (
+                          <ExerciseRow
+                            key={exercise.id}
+                            exercise={exercise}
+                            expanded={openExercise === exercise.id}
+                            prescribed={prescriptions.some(
+                              (p) => p.exerciseId === exercise.id && p.active,
+                            )}
+                            onToggle={() =>
+                              setOpenExercise((cur) => (cur === exercise.id ? null : exercise.id))
+                            }
+                            onAdd={() => setRxDialog({ open: true, exerciseId: exercise.id })}
+                            onDelete={() => {
+                              if (confirm('Remove this custom exercise?')) {
+                                removeExercise(exercise.id);
+                                setOpenExercise(null);
+                              }
+                            }}
+                          />
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </>
       ) : (
@@ -209,15 +259,6 @@ export function ExercisesPage() {
           onLog={(id) => setLogFor(exerciseById.get(id) ?? null)}
         />
       )}
-
-      <ExerciseDetail
-        exercise={detail}
-        onClose={() => setDetail(null)}
-        onAdd={(id) => {
-          setDetail(null);
-          setRxDialog({ open: true, exerciseId: id });
-        }}
-      />
 
       <PrescriptionDialog
         open={rxDialog.open}
@@ -232,6 +273,185 @@ export function ExercisesPage() {
 
       <CustomExerciseDialog open={showCustom} onClose={() => setShowCustom(false)} />
     </>
+  );
+}
+
+// --- one exercise, collapsed or expanded ------------------------------------
+
+function ExerciseRow({
+  exercise,
+  expanded,
+  prescribed,
+  onToggle,
+  onAdd,
+  onDelete,
+}: {
+  exercise: Exercise;
+  expanded: boolean;
+  prescribed: boolean;
+  onToggle: () => void;
+  onAdd: () => void;
+  onDelete: () => void;
+}) {
+  const metric = metricOf(exercise.metric);
+
+  return (
+    <li className={cx('border-b border-line last:border-b-0', expanded && 'bg-surface-2/50')}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={`ex-${exercise.id}`}
+        className="w-full flex items-start gap-3 px-4 sm:px-5 py-3.5 text-left hover:bg-surface-2 transition min-h-14"
+      >
+        <ChevronDown
+          size={16}
+          className={cx('text-ink-faint shrink-0 mt-1 transition-transform', !expanded && '-rotate-90')}
+        />
+        <span className="min-w-0 grow">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{exercise.name}</span>
+            {prescribed ? (
+              <Chip tone="ok">
+                <Check size={12} /> in program
+              </Chip>
+            ) : null}
+            {!exercise.builtIn ? <Chip>custom</Chip> : null}
+          </span>
+          <span className="block text-sm text-ink-soft mt-0.5 leading-relaxed">
+            {exercise.summary}
+          </span>
+        </span>
+        <span className="shrink-0 hidden sm:flex gap-1.5 pt-0.5">
+          {metric ? (
+            <Chip tone="brand">
+              <Camera size={11} /> {metric.short}
+            </Chip>
+          ) : (
+            <Chip>manual</Chip>
+          )}
+        </span>
+      </button>
+
+      {expanded ? (
+        <div id={`ex-${exercise.id}`} className="px-4 sm:px-5 pb-5 pt-1 animate-in">
+          <div className="sm:pl-7 space-y-5">
+            <div className="flex flex-wrap gap-1.5 sm:hidden">
+              {metric ? (
+                <Chip tone="brand">
+                  <Camera size={11} /> {metric.short}
+                </Chip>
+              ) : (
+                <Chip>manual log</Chip>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {exercise.strokeNote ? <Chip tone="accent">stroke focus</Chip> : null}
+              {exercise.holdBased ? <Chip>held, not repeated</Chip> : null}
+              {exercise.equipment?.map((item) => <Chip key={item}>{item}</Chip>)}
+            </div>
+
+            {exercise.safety ? (
+              <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 flex gap-3">
+                <AlertTriangle size={18} className="text-danger shrink-0 mt-0.5" />
+                <p className="text-sm leading-relaxed">{exercise.safety}</p>
+              </div>
+            ) : null}
+
+            {exercise.steps.length ? (
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-faint mb-2">
+                  How it is usually done
+                </h4>
+                <ol className="space-y-2">
+                  {exercise.steps.map((step, i) => (
+                    <li key={i} className="flex gap-3 text-sm leading-relaxed">
+                      <span className="shrink-0 w-5.5 h-5.5 rounded-full bg-brand-soft text-brand-ink grid place-items-center text-[0.7rem] font-semibold mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+
+            {exercise.cues.length ? (
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-faint mb-2">
+                  Things to watch for
+                </h4>
+                <ul className="space-y-1.5">
+                  {exercise.cues.map((cue, i) => (
+                    <li key={i} className="flex gap-2.5 text-sm text-ink-soft leading-relaxed">
+                      <span aria-hidden className="text-brand">
+                        •
+                      </span>
+                      {cue}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {exercise.strokeNote ? (
+              <div className="rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-accent-ink mb-1">
+                  After a stroke
+                </p>
+                <p className="text-sm leading-relaxed">{exercise.strokeNote}</p>
+              </div>
+            ) : null}
+
+            {metric ? (
+              <div className="rounded-xl border border-line bg-surface px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint mb-1">
+                  Camera tracking
+                </p>
+                <p className="text-sm leading-relaxed">
+                  Measures <strong>{metric.label.toLowerCase()}</strong>.{' '}
+                  {metric.cameraView === 'front'
+                    ? 'Stand facing the camera.'
+                    : metric.cameraView === 'side'
+                      ? 'Stand side-on to the camera.'
+                      : 'Either view works.'}{' '}
+                  {metric.note}
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-line bg-surface px-4 py-3 flex gap-3">
+                <Info size={17} className="text-ink-faint shrink-0 mt-0.5" />
+                <p className="text-sm text-ink-soft leading-relaxed">
+                  This one is logged by hand. A single webcam cannot measure it reliably — usually
+                  because the movement is a rotation, or too small to see — and a made-up number
+                  would be worse than none.
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="primary" onClick={onAdd}>
+                Add to program
+              </Button>
+              {metric ? (
+                <Button
+                  icon={<Video size={16} />}
+                  onClick={() => navigate('/motion', { exercise: exercise.id })}
+                >
+                  Try with the camera
+                </Button>
+              ) : null}
+              {!exercise.builtIn ? (
+                <Button variant="danger" icon={<Trash2 size={15} />} onClick={onDelete}>
+                  Delete
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </li>
   );
 }
 
@@ -312,10 +532,7 @@ function ProgramList({
                 <Button size="sm" icon={<Pencil size={15} />} onClick={() => onEdit(rx.id)}>
                   Edit
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => putPrescription({ ...rx, active: !rx.active })}
-                >
+                <Button size="sm" onClick={() => putPrescription({ ...rx, active: !rx.active })}>
                   {rx.active ? 'Pause' : 'Resume'}
                 </Button>
                 <Button
@@ -336,137 +553,6 @@ function ProgramList({
         );
       })}
     </ul>
-  );
-}
-
-// --- detail -----------------------------------------------------------------
-
-function ExerciseDetail({
-  exercise,
-  onClose,
-  onAdd,
-}: {
-  exercise: Exercise | null;
-  onClose: () => void;
-  onAdd: (id: string) => void;
-}) {
-  if (!exercise) return null;
-  const metric = metricOf(exercise.metric);
-
-  return (
-    <Modal
-      open={!!exercise}
-      onClose={onClose}
-      title={exercise.name}
-      wide
-      footer={
-        <>
-          {!exercise.builtIn ? (
-            <Button
-              variant="danger"
-              onClick={() => {
-                if (confirm('Remove this custom exercise?')) {
-                  removeExercise(exercise.id);
-                  onClose();
-                }
-              }}
-            >
-              Delete
-            </Button>
-          ) : null}
-          <Button onClick={onClose}>Close</Button>
-          <Button variant="primary" onClick={() => onAdd(exercise.id)}>
-            Add to program
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-5">
-        <p className="text-ink-soft leading-relaxed">{exercise.summary}</p>
-
-        <div className="flex flex-wrap gap-1.5">
-          <Chip>{CATEGORY_LABELS[exercise.category]}</Chip>
-          {metric ? (
-            <Chip tone="brand">
-              <Camera size={11} /> measures {metric.label.toLowerCase()}
-            </Chip>
-          ) : null}
-          {exercise.equipment?.map((item) => <Chip key={item}>{item}</Chip>)}
-        </div>
-
-        {exercise.safety ? (
-          <div className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 flex gap-3">
-            <AlertTriangle size={18} className="text-danger shrink-0 mt-0.5" />
-            <p className="text-sm leading-relaxed">{exercise.safety}</p>
-          </div>
-        ) : null}
-
-        <div>
-          <h3 className="font-medium mb-2">How it is usually done</h3>
-          <ol className="space-y-2">
-            {exercise.steps.map((step, i) => (
-              <li key={i} className="flex gap-3 text-sm leading-relaxed">
-                <span className="shrink-0 w-6 h-6 rounded-full bg-brand-soft text-brand-ink grid place-items-center text-xs font-semibold">
-                  {i + 1}
-                </span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {exercise.cues.length ? (
-          <div>
-            <h3 className="font-medium mb-2">Things to watch for</h3>
-            <ul className="space-y-1.5">
-              {exercise.cues.map((cue, i) => (
-                <li key={i} className="flex gap-2.5 text-sm text-ink-soft leading-relaxed">
-                  <span aria-hidden className="text-brand">
-                    •
-                  </span>
-                  {cue}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {exercise.strokeNote ? (
-          <div className="rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-accent-ink mb-1">
-              After a stroke
-            </p>
-            <p className="text-sm leading-relaxed">{exercise.strokeNote}</p>
-          </div>
-        ) : null}
-
-        {metric ? (
-          <div className="rounded-xl border border-line bg-surface-2 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint mb-1">
-              Camera tracking
-            </p>
-            <p className="text-sm leading-relaxed">
-              Measures <strong>{metric.label.toLowerCase()}</strong>.{' '}
-              {metric.cameraView === 'front'
-                ? 'Stand facing the camera.'
-                : metric.cameraView === 'side'
-                  ? 'Stand side-on to the camera.'
-                  : 'Either view works.'}{' '}
-              {metric.note}
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-line bg-surface-2 px-4 py-3 flex gap-3">
-            <Info size={17} className="text-ink-faint shrink-0 mt-0.5" />
-            <p className="text-sm text-ink-soft leading-relaxed">
-              This one is logged by hand. A single webcam cannot measure it reliably — usually
-              because the movement is a rotation, or too small to see — and a made-up number would
-              be worse than none.
-            </p>
-          </div>
-        )}
-      </div>
-    </Modal>
   );
 }
 

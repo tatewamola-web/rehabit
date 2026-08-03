@@ -48,7 +48,7 @@ export interface DrawOptions {
   highlight?: OverlayJoints;
   /** Text shown at the vertex, e.g. "94°". */
   readout?: string;
-  /** Recolour the highlighted joint when the target is met. */
+  /** Recolor the highlighted joint when the target is met. */
   onTarget?: boolean;
   /** Dim everything when the model has lost the person. */
   dimmed?: boolean;
@@ -318,7 +318,7 @@ function bigLabel(
   ctx.textAlign = 'start';
 }
 
-/** Big centred message for "step back" / "can't see you" states. */
+/** Big centered message for "step back" / "can't see you" states. */
 export function drawNotice(ctx: CanvasRenderingContext2D, size: Size, text: string) {
   const scale = Math.min(size.width, size.height) / 480;
   ctx.save();

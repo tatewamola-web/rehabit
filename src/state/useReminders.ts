@@ -26,7 +26,7 @@ export function useReminders(settings: Settings, sessions: SessionLog[]) {
       if (Notification.permission !== 'granted') return;
       const now = new Date();
       const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const slot = settings.reminderTimes.find((t) => normalise(t) === hhmm);
+      const slot = settings.reminderTimes.find((t) => normalize(t) === hhmm);
       if (!slot) return;
 
       const key = `${today()}@${slot}`;
@@ -49,7 +49,7 @@ export function useReminders(settings: Settings, sessions: SessionLog[]) {
   }, [settings.remindersEnabled, settings.reminderTimes]);
 }
 
-function normalise(time: string): string {
+function normalize(time: string): string {
   const [h, m] = time.split(':');
   return `${String(Number(h)).padStart(2, '0')}:${(m ?? '00').padStart(2, '0')}`;
 }

@@ -112,7 +112,7 @@ export interface AdherenceSummary {
   sessionsInWindow: number;
 }
 
-export function summarise(
+export function summarize(
   prescriptions: Prescription[],
   sessions: SessionLog[],
   windowDays = 30,

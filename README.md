@@ -82,7 +82,7 @@ There is no server. There is no account. There is no analytics, no telemetry, an
 after install.
 
 - All your data lives in **IndexedDB in your browser, on your machine**.
-- The camera image is analysed **frame by frame in WebAssembly inside the tab** and discarded
+- The camera image is analyzed **frame by frame in WebAssembly inside the tab** and discarded
   immediately. No video is recorded, saved, or transmitted. Only numbers are stored, and only when
   you press record.
 - Pose models and the MediaPipe runtime are vendored into the app's own folder at setup, so after
@@ -196,8 +196,8 @@ Please don't send PRs that add clinical claims, normative ranges, "you should do
 anything that would make the app look like it's giving medical guidance. Keeping that line bright
 is the point.
 
-## Licence
+## License
 
 MIT — see [LICENSE](LICENSE).
 
-Rehabit is not affiliated with, endorsed by, or a product of any healthcare organisation.
+Rehabit is not affiliated with, endorsed by, or a product of any healthcare organization.

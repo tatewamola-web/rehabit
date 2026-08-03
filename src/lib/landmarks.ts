@@ -80,7 +80,7 @@ export function poseSide(side: 'left' | 'right') {
 
 export type Segment = 'torso' | 'arm-left' | 'arm-right' | 'leg-left' | 'leg-right' | 'head';
 
-/** Skeleton edges, grouped so each limb can be coloured independently. */
+/** Skeleton edges, grouped so each limb can be colored independently. */
 export const POSE_EDGES: [number, number, Segment][] = [
   [POSE.leftShoulder, POSE.rightShoulder, 'torso'],
   [POSE.leftShoulder, POSE.leftHip, 'torso'],

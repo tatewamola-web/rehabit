@@ -78,7 +78,7 @@ export class OneEuroFilter {
   }
 }
 
-/** Simple exponential smoothing for values that don't need adaptive behaviour. */
+/** Simple exponential smoothing for values that don't need adaptive behavior. */
 export class Ema {
   private value: number | null = null;
   constructor(private alpha = 0.2) {}

@@ -106,7 +106,7 @@ export function DisclaimerGate({ children }: { children: React.ReactNode }) {
             <span>
               <strong className="font-medium">Your data stays here.</strong> Everything is stored on
               this computer, in this browser. Nothing is uploaded, and the camera image never leaves
-              the page — it is analysed on your machine and thrown away frame by frame.
+              the page — it is analyzed on your machine and thrown away frame by frame.
             </span>
           </li>
         </ul>

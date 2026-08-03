@@ -109,7 +109,7 @@ function handCurlPercent(h: Pt[]): number {
   return clamp((mean / 95) * 100, 0, 100);
 }
 
-/** Palm width, used to normalise distances so hand size and depth cancel out. */
+/** Palm width, used to normalize distances so hand size and depth cancel out. */
 function handScale(h: Pt[]): number {
   return Math.max(distance(h[HAND.wrist], h[HAND.middleMcp]), 1e-4);
 }

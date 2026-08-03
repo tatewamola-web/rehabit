@@ -35,7 +35,7 @@ import {
   StatTile,
   cx,
 } from '../components/ui';
-import { statsForRange, summarise } from '../lib/adherence';
+import { statsForRange, summarize } from '../lib/adherence';
 import { deleteSession } from '../lib/db';
 import { formatDay, formatDuration, friendlyDay, lastNDays } from '../lib/dates';
 import { metricOf } from '../lib/metrics';
@@ -59,7 +59,7 @@ export function ProgressPage() {
   );
 
   const summary = useMemo(
-    () => summarise(activePrescriptions, sessions, Math.min(windowDays, 365)),
+    () => summarize(activePrescriptions, sessions, Math.min(windowDays, 365)),
     [activePrescriptions, sessions, windowDays],
   );
 

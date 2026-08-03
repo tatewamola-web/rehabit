@@ -563,7 +563,7 @@ function MotionSession({
                 <div>
                   <p className="font-medium text-white">The camera is off</p>
                   <p className="text-sm text-white/70 mt-1.5 leading-relaxed">
-                    Nothing is recorded or uploaded. Frames are analysed on this computer and
+                    Nothing is recorded or uploaded. Frames are analyzed on this computer and
                     discarded — only the numbers are saved, and only if you press record.
                   </p>
                 </div>

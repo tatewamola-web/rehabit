@@ -439,7 +439,7 @@ const seeds: Seed[] = [
     id: 'sit-to-stand',
     name: 'Sit to stand',
     category: 'functional',
-    summary: 'Stand up from a chair and sit back down under control — the single most useful thing you can practise.',
+    summary: 'Stand up from a chair and sit back down under control — the single most useful thing you can practice.',
     steps: [
       'Sit toward the front of a sturdy chair, feet flat and slightly back.',
       'Lean your nose over your toes.',
@@ -727,7 +727,7 @@ const seeds: Seed[] = [
     steps: [
       'Sit tall with feet flat, arms crossed over your chest.',
       'Turn your upper body to one side, hold.',
-      'Return to centre and turn the other way.',
+      'Return to center and turn the other way.',
     ],
     cues: ['Turn from the ribs, not just the neck. Hips stay facing forward.'],
     bilateral: false,
@@ -876,13 +876,13 @@ const seeds: Seed[] = [
     id: 'hand-to-mouth',
     name: 'Hand to mouth',
     category: 'functional',
-    summary: 'Practise bringing a cup or your hand to your mouth.',
+    summary: 'Practice bringing a cup or your hand to your mouth.',
     steps: [
       'Sit at a table with the elbow resting on it.',
       'Bring your hand up to your mouth.',
       'Lower it back to the table under control.',
     ],
-    cues: ['Keep your head still and let the arm do the travelling.'],
+    cues: ['Keep your head still and let the arm do the traveling.'],
     strokeNote: 'Directly rehearses eating and drinking, and it is a natural motivator.',
     metric: 'elbow-flexion',
     defaultTarget: 120,

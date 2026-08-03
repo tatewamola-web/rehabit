@@ -2,7 +2,7 @@
  * Day handling. Every stored day is a local `YYYY-MM-DD` string rather than a
  * timestamp, because "did I do my exercises today" is a question about the
  * user's calendar, not about UTC. Exercising at 11pm should not land on
- * tomorrow, and travelling should not silently break a streak.
+ * tomorrow, and traveling should not silently break a streak.
  */
 
 export type DayKey = string;
