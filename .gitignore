@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+.vite/
+
+# Vendored at setup time by `npm run setup` — kept out of git so the repo
+# stays small. ~55 MB of model weights and WASM.
+public/models/*.task
+public/mediapipe/

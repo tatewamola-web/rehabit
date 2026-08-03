@@ -1,0 +1,42 @@
+{
+  "name": "rehabit",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local-first rehab companion: log your PT exercises, measure range of motion with your webcam, and track progress over time.",
+  "license": "MIT",
+  "keywords": [
+    "stroke-rehabilitation",
+    "physical-therapy",
+    "range-of-motion",
+    "pose-estimation",
+    "mediapipe",
+    "local-first",
+    "accessibility"
+  ],
+  "scripts": {
+    "setup": "node scripts/fetch-assets.mjs",
+    "postinstall": "node scripts/fetch-assets.mjs --soft",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.22",
+    "idb": "^8.0.3",
+    "lucide-react": "^0.544.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "recharts": "^3.2.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  }
+}

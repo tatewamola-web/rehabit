@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Palette. Calm, high-contrast, low-saturation. Teal reads as "healing" without
+   the sterile clinical blue; amber is the only attention colour, and red is
+   reserved for genuine safety content so it never gets diluted by UI chrome.
+--------------------------------------------------------------------------- */
+:root {
+  --text-scale: 1;
+
+  --bg: oklch(0.985 0.006 140);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.968 0.008 150);
+  --border: oklch(0.9 0.012 160);
+  --border-strong: oklch(0.82 0.02 165);
+
+  --ink: oklch(0.26 0.02 180);
+  --ink-soft: oklch(0.48 0.02 180);
+  --ink-faint: oklch(0.62 0.018 180);
+
+  --brand: oklch(0.55 0.1 185);
+  --brand-ink: oklch(0.38 0.09 185);
+  --brand-soft: oklch(0.945 0.03 180);
+  --on-brand: oklch(0.99 0.01 180);
+
+  --accent: oklch(0.75 0.15 70);
+  --accent-ink: oklch(0.48 0.11 65);
+  --accent-soft: oklch(0.96 0.04 80);
+
+  --ok: oklch(0.6 0.13 155);
+  --ok-soft: oklch(0.95 0.04 155);
+  --danger: oklch(0.58 0.19 20);
+  --danger-soft: oklch(0.96 0.03 25);
+
+  --shadow: 0 1px 2px oklch(0.4 0.03 180 / 0.06), 0 8px 24px -12px oklch(0.4 0.03 180 / 0.18);
+}
+
+.dark {
+  --bg: oklch(0.19 0.014 200);
+  --surface: oklch(0.235 0.016 200);
+  --surface-2: oklch(0.28 0.018 200);
+  --border: oklch(0.34 0.02 200);
+  --border-strong: oklch(0.45 0.025 200);
+
+  --ink: oklch(0.95 0.008 190);
+  --ink-soft: oklch(0.78 0.014 190);
+  --ink-faint: oklch(0.63 0.016 190);
+
+  --brand: oklch(0.72 0.11 185);
+  --brand-ink: oklch(0.84 0.1 185);
+  --brand-soft: oklch(0.31 0.045 190);
+  --on-brand: oklch(0.19 0.03 190);
+
+  --accent: oklch(0.79 0.14 75);
+  --accent-ink: oklch(0.86 0.11 80);
+  --accent-soft: oklch(0.32 0.05 70);
+
+  --ok: oklch(0.72 0.13 155);
+  --ok-soft: oklch(0.3 0.05 155);
+  --danger: oklch(0.68 0.17 22);
+  --danger-soft: oklch(0.32 0.07 20);
+
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 10px 30px -14px oklch(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Inter, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+
+  --shadow-card: var(--shadow);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+html {
+  /* Settings → text size drives this; everything else is rem-based. */
+  font-size: calc(16px * var(--text-scale));
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+/* Visible focus everywhere — this app is meant to be driveable by keyboard
+   and by people whose pointer accuracy is impaired. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Range inputs — used for pain/fatigue, needs a big grab target. */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1.75rem;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: -0.55rem;
+  border-radius: 999px;
+  background: var(--brand);
+  border: 3px solid var(--surface);
+  box-shadow: 0 1px 4px oklch(0 0 0 / 0.25);
+}
+
+@utility card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.animate-in {
+  animation: fade-rise 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pulse-soft {
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Recharts leaks a default outline on the SVG wrapper. */
+.recharts-wrapper:focus {
+  outline: none;
+}
