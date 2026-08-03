@@ -32,7 +32,7 @@ New or worsening pain, numbness, or weakness means stop and contact your clinici
 drooping, arm weakness, or speech difficulty is a medical emergency — call emergency services.**
 
 The app makes you read a version of this before it will open, and repeats the estimate caveat next
-to every number it produces.
+to every number it produces. The full version is in [DISCLAIMER.md](DISCLAIMER.md).
 
 ---
 
@@ -99,7 +99,7 @@ everything — use it.
 Requires [Node.js](https://nodejs.org) 20 or newer.
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/rehabit.git
+git clone https://github.com/tatewamola-web/rehabit.git
 ```
 
 ```bash
@@ -198,6 +198,7 @@ is the point.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Use of the software is also subject to the terms in
+[DISCLAIMER.md](DISCLAIMER.md).
 
 Rehabit is not affiliated with, endorsed by, or a product of any healthcare organization.
