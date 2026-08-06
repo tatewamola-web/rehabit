@@ -211,6 +211,8 @@ function MotionSession({
   const [recording, setRecording] = useState(false);
   const [pendingSave, setPendingSave] = useState<Partial<SessionLog> | null>(null);
   const [lastRep, setLastRep] = useState<RepEvent | null>(null);
+  const [delegate, setDelegate] = useState<'GPU' | 'CPU' | null>(null);
+  const [handsUnavailable, setHandsUnavailable] = useState(false);
 
   const needsHands = metric?.source === 'hand';
 
@@ -357,6 +359,8 @@ function MotionSession({
       const engine = new PoseEngine({ poseModel, trackHands: needsHands });
       await engine.init();
       engineRef.current = engine;
+      setDelegate(engine.delegate);
+      setHandsUnavailable(needsHands && !engine.trackingHands);
 
       filterRef.current.reset();
       fpsRef.current = { frames: 0, since: performance.now(), value: 0 };
@@ -373,8 +377,13 @@ function MotionSession({
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine?.ready) return;
-    if (needsHands && !engine.trackingHands) void engine.enableHands();
-    if (!needsHands && engine.trackingHands) engine.disableHands();
+    if (needsHands && !engine.trackingHands) {
+      void engine.enableHands().then((ok) => setHandsUnavailable(!ok));
+    }
+    if (!needsHands && engine.trackingHands) {
+      engine.disableHands();
+      setHandsUnavailable(false);
+    }
   }, [needsHands]);
 
   useEffect(() => stopCamera, [stopCamera]);
@@ -641,6 +650,22 @@ function MotionSession({
         {stats.hint && camera === 'live' ? (
           <p className="text-sm text-accent-ink bg-accent-soft border border-accent/30 rounded-xl px-3.5 py-2.5 mt-3">
             {stats.hint}
+          </p>
+        ) : null}
+
+        {camera === 'live' && handsUnavailable ? (
+          <p className="text-sm text-accent-ink bg-accent-soft border border-accent/30 rounded-xl px-3.5 py-2.5 mt-3">
+            Hand tracking could not start on this computer, so fingers are not being detected. The
+            body skeleton still works — pick an exercise measured at a larger joint, or log this one
+            by hand.
+          </p>
+        ) : null}
+
+        {camera === 'live' && delegate === 'CPU' ? (
+          <p className="text-sm text-ink-soft bg-surface-2 border border-line rounded-xl px-3.5 py-2.5 mt-3">
+            Running without graphics acceleration on this computer, so the video may look choppy.
+            Tracking still works and the angles are unaffected. Settings → Camera → <em>Fast</em>{' '}
+            helps if it is struggling.
           </p>
         ) : null}
 

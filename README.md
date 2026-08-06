@@ -119,14 +119,32 @@ Then start it:
 npm run dev
 ```
 
-Open <http://localhost:5273>. Chrome, Edge, or Safari on a reasonably recent machine; the camera
-needs `localhost` or HTTPS, which `npm run dev` gives you.
+Open <http://localhost:5273>. Chrome, Edge, Safari, or Firefox on a reasonably recent machine.
 
-To build a static copy you can serve from anywhere (or open from a folder — it uses hash routing):
+To build a static copy:
 
 ```bash
 npm run build
 ```
+
+**A note on serving the build.** Browsers only hand out the camera in a *secure context* — that
+means `localhost` or HTTPS, nothing else. `npm run dev` and `npm run preview` both count. But if you
+copy `dist/` onto a machine and open it over plain HTTP at an IP address, or open `index.html`
+straight off disk with `file://`, the log and the charts will work and **the camera will silently
+refuse to start.** That is the browser, not the app. Serve it over localhost or put a certificate in
+front of it.
+
+### If the camera does not start
+
+The app tells you which of these it is, but for reference:
+
+| What you see | What it means |
+|---|---|
+| "Camera access was blocked" | Permission was denied for the page. Re-allow it in the browser's site settings. |
+| "The camera is busy" | Another app has it open. Video calls are the usual culprit. |
+| "Pose model files are missing" | `npm run setup` didn't finish. Run it again with a network connection. |
+| Nothing happens at all, no prompt | Almost certainly not a secure context — see the note above. |
+| It works but the video is choppy | Your machine fell back to CPU inference; the app says so under the video. Angles are unaffected. Settings → Camera → *Fast* helps. |
 
 ### Tips for better tracking
 

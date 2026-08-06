@@ -42,6 +42,17 @@ export class MissingAssetsError extends Error {
   }
 }
 
+/** The assets are present but the model would not start on this machine. */
+export class PoseEngineError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PoseEngineError';
+  }
+}
+
+const describe = (err: unknown) =>
+  err instanceof Error ? err.message.split('\n')[0].slice(0, 120) : String(err).slice(0, 120);
+
 function toPts(landmarks: { x: number; y: number; visibility?: number }[], aspect: number): Pt[] {
   return landmarks.map((l) => ({
     x: l.x * aspect,
@@ -88,6 +99,9 @@ export class PoseEngine {
   private lastTimestamp = -1;
   private options: EngineOptions;
 
+  /** Which inference path we ended up on. Surfaced so slow ≠ unexplained. */
+  delegate: 'GPU' | 'CPU' | null = null;
+
   constructor(options: EngineOptions) {
     this.options = options;
   }
@@ -100,45 +114,101 @@ export class PoseEngine {
     return this.hands !== null;
   }
 
+  /**
+   * Tries the GPU delegate and falls back to CPU.
+   *
+   * The GPU path needs WebGL2 that MediaPipe is willing to use, and that is not
+   * a given: virtual machines, remote desktops, older integrated graphics, and
+   * drivers on the browser's blocklist all fail it. On those machines the app
+   * still works — CPU inference is several times slower but far from unusable —
+   * so falling back beats refusing to start. Which one we got is reported so
+   * the UI can explain a low frame rate instead of leaving it a mystery.
+   */
+  private async createWithFallback<T>(
+    create: (delegate: 'GPU' | 'CPU') => Promise<T>,
+    label: string,
+  ): Promise<T> {
+    try {
+      const task = await create('GPU');
+      this.delegate = 'GPU';
+      return task;
+    } catch (gpuError) {
+      try {
+        const task = await create('CPU');
+        this.delegate = 'CPU';
+        return task;
+      } catch (cpuError) {
+        // Both failed. If the files aren't there, say so — that's fixable by
+        // the user. Otherwise report what actually went wrong rather than
+        // sending them off to re-download models that are already present.
+        const assets = await checkAssets();
+        if (!assets.ok) throw new MissingAssetsError(assets.missing.join(', '));
+        throw new PoseEngineError(
+          `Could not start the ${label} model on this computer. ` +
+            `The graphics path failed (${describe(gpuError)}) and so did the fallback ` +
+            `(${describe(cpuError)}). Your browser may be too old, or blocking WebAssembly.`,
+        );
+      }
+    }
+  }
+
   async init(): Promise<void> {
     let fileset;
     try {
       fileset = await FilesetResolver.forVisionTasks(WASM_PATH);
-    } catch (err) {
-      throw new MissingAssetsError(err instanceof Error ? err.message : 'wasm runtime');
+    } catch {
+      // The runtime is the first thing loaded, so a failure here is almost
+      // always the vendored files being absent.
+      const assets = await checkAssets();
+      throw new MissingAssetsError(assets.missing.join(', ') || 'wasm runtime');
     }
 
     const modelFile =
       this.options.poseModel === 'full' ? 'pose_landmarker_full.task' : 'pose_landmarker_lite.task';
 
-    try {
-      this.pose = await PoseLandmarker.createFromOptions(fileset, {
-        baseOptions: { modelAssetPath: `${MODEL_BASE}/${modelFile}`, delegate: 'GPU' },
-        runningMode: 'VIDEO',
-        numPoses: 1,
-        minPoseDetectionConfidence: 0.5,
-        minPosePresenceConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-        outputSegmentationMasks: false,
-      });
-    } catch (err) {
-      throw new MissingAssetsError(err instanceof Error ? err.message : modelFile);
-    }
+    this.pose = await this.createWithFallback(
+      (delegate) =>
+        PoseLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: `${MODEL_BASE}/${modelFile}`, delegate },
+          runningMode: 'VIDEO',
+          numPoses: 1,
+          minPoseDetectionConfidence: 0.5,
+          minPosePresenceConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+          outputSegmentationMasks: false,
+        }),
+      'body pose',
+    );
 
     if (this.options.trackHands) await this.enableHands();
   }
 
-  async enableHands(): Promise<void> {
-    if (this.hands) return;
-    const fileset = await FilesetResolver.forVisionTasks(WASM_PATH);
-    this.hands = await HandLandmarker.createFromOptions(fileset, {
-      baseOptions: { modelAssetPath: `${MODEL_BASE}/hand_landmarker.task`, delegate: 'GPU' },
-      runningMode: 'VIDEO',
-      numHands: 2,
-      minHandDetectionConfidence: 0.4,
-      minHandPresenceConfidence: 0.4,
-      minTrackingConfidence: 0.4,
-    });
+  /**
+   * Resolves either way. Hand tracking is an enhancement to a session that is
+   * already working, so a failure here downgrades to body-only rather than
+   * taking down the whole page.
+   */
+  async enableHands(): Promise<boolean> {
+    if (this.hands) return true;
+    try {
+      const fileset = await FilesetResolver.forVisionTasks(WASM_PATH);
+      this.hands = await this.createWithFallback(
+        (delegate) =>
+          HandLandmarker.createFromOptions(fileset, {
+            baseOptions: { modelAssetPath: `${MODEL_BASE}/hand_landmarker.task`, delegate },
+            runningMode: 'VIDEO',
+            numHands: 2,
+            minHandDetectionConfidence: 0.4,
+            minHandPresenceConfidence: 0.4,
+            minTrackingConfidence: 0.4,
+          }),
+        'hand',
+      );
+      return true;
+    } catch {
+      this.hands = null;
+      return false;
+    }
   }
 
   disableHands(): void {
@@ -195,6 +265,7 @@ export class PoseEngine {
     this.pose = null;
     this.disableHands();
     this.lastTimestamp = -1;
+    this.delegate = null;
   }
 }
 
